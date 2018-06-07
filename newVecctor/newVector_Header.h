@@ -21,7 +21,10 @@ public:
 	typedef std::reverse_iterator<const_iterator> 							const_reverse_iterator;//+
 
 private:
+	//alloctors and stuff
 
+public:
+	//8 constructors
 
 };
 
