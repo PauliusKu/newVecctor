@@ -28,7 +28,7 @@ public:
 	typedef std::reverse_iterator<iterator> 								reverse_iterator;//+
 	typedef std::reverse_iterator<const_iterator> 							const_reverse_iterator;//+
 
-	//8 constructors
+	// 9 constructors
 
 	explicit newvector(const allocator_type& alloc = allocator_type()) :
 		allocator_(alloc),
@@ -133,81 +133,245 @@ public:
 		std::cout << "c-tor 8" << std::endl;
 	};
 
+	//desructor
 	~newvector() {
 		destroy_elements(array_, size_);
 		allocator_.deallocate(array_, capacity_);
 		array_start_ = nullptr;
 		array_end_ = nullptr;
 		array_range_end_ = nullptr;
+		std::cout << "d - tor" << std::endl;
 	}
 
-	// Element access
+	// operator =
+
+	newvector& operator=(const newvector& x)
+	{
+		if (capacity_ >= x.size_) {
+			size_ = x.size();
+		}
+		else {
+			destroy_elements(array_, size_);
+			allocator_.deallocate(array_, capacity_);
+			capacity_ = x.size();
+			size_ = x.size();
+			array_ = allocator_.allocate(x.size());
+		}
+		rearrange_pointers();
+		construct_elements(x.begin(), x.end(), array_start_);
+		std::cout << "operator= 1" << std::endl;
+		return *this;
+	}
+
+	newvector& operator=(newvector&& x)
+	{
+		destroy_elements(array_, capacity_);
+		allocator_.deallocate(array_, capacity_);
+		size_ = x.size_;
+		capacity_ = x.capacity_;
+		array_ = x.array_;
+		rearrange_pointers();
+		x.size_ = 0;
+		x.capacity_ = 0;
+		x.array_ = nullptr;
+		x.rearrange_pointers();
+		std::cout << "operator= 2" << std::endl;
+		return *this;
+	}
+
+	newvector& operator=(std::initializer_list<value_type> il)
+	{
+		if (capacity_ >= il.size()) {
+			size_ = il.size();
+		}
+		else {
+			destroy_elements(array_, size_);
+			allocator_.deallocate(array_, capacity_);
+			capacity_ = il.size();
+			size_ = il.size();
+			array_ = allocator_.allocate(il.size());
+		}
+		rearrange_pointers();
+		construct_elements(il.begin(), il.end(), array_start_);
+		std::cout << "operator= 3" << std::endl;
+		return *this;
+	}
+
+	// assign
+
+	void assign(size_type n, const_reference val) {
+		size_ = n;
+		if (n > capacity_) { increase_array(n); }
+		construct_elements(array_, n, val);
+		rearrange_pointers();
+		std::cout << "assign 1" << std::endl;
+	}
+
+	void assign(pointer first, pointer last) {
+		size_ = last - first;
+		if (last - first > capacity_) { increase_array(last - first); }
+		construct_elements(first, last, array_start_);
+		rearrange_pointers();
+		std::cout << "assign 2" << std::endl;
+	}
+
+	void assign(std::initializer_list<value_type> il) {
+		size_ = il.size();
+		if (il.size() <= capacity_) {
+		}
+		else {
+			increase_array(il.size());
+		}
+		construct_elements(il.begin(), il.end(), begin());
+		rearrange_pointers();
+		std::cout << "assign 3" << std::endl;
+	}
+
+	// get_allocator
+
+	inline allocator_type get_allocator() { return allocator_; }
+
+	// ELEMENT ACCESS
+
+	// at
+
+	reference at(size_type n)
+	{
+		if (n > 0 && n < capacity_){ return *(array_start_ + n); }
+		else throw std::out_of_range("out of vector range.");
+	}
+
+	const_reference at(size_type n) const
+	{
+		if (n > 0 && n < capacity_){ return *(array_start_ + n); }
+		else throw std::out_of_range("out of vector range.");
+	}
+
+	// operator []
 
 	reference operator[](size_type n) { return *(array_start_ + n); }
 
 	const_reference operator[](size_type n) const { return *(array_start_ + n); }
 
-	reference at(size_type n) {
-		if (n > 0 && n < capacity_)
-			return *(array_start_ + n);
-		else throw std::out_of_range("out of vector range.");
-	}
+	// front
 
-	const_reference at(size_type n) const {
-		if (n > 0 && n < capacity_)
-			return *(array_start_ + n);
-		else throw std::out_of_range("out of vector range.");
-	}
+	inline reference front() { return *(array_start_); }
 
-	inline reference front() {
-		return *(array_start_);
-	}
+	inline const_reference front() const { return *(array_start_); }
 
-	inline const_reference front() const {
-		return *(array_start_);
-	}
+	// back
 
-	inline reference back() {
-		return *(array_end_);
-	}
+	inline reference back() { return *(array_end_); }
 
-	inline const_reference back() const {
-		return *(array_end_);
-	}
+	inline const_reference back() const { return *(array_end_); }
+
+	// data
 
 	inline pointer data() const { return array_; }
 
-	// Iterators
+	// ITERATORS
 
 	inline iterator begin() { return iterator(array_start_); }
 
-	inline iterator end() { return iterator(array_end_); }
-
 	inline const_iterator begin() const { return const_iterator(array_start_); }
 
-	inline const_iterator end() const { return const_iterator(array_end_); }
-
 	inline const_iterator cbegin() const { return const_iterator(array_start_); }
+
+	inline iterator end() { return iterator(array_end_); }
+
+	inline const_iterator end() const { return const_iterator(array_end_); }
 
 	inline const_iterator cend() const { return const_iterator(array_end_); }
 
 	inline reverse_iterator rbegin() { return reverse_iterator(end()); }
 
-	inline reverse_iterator rend() { return reverse_iterator(begin()); }
-
 	inline const_reverse_iterator rbegin() const { return reverse_iterator(cend()); }
-
-	inline const_reverse_iterator rend() const { return reverse_iterator(cbegin()); }
 
 	inline const_reverse_iterator crbegin() const { return reverse_iterator(cend()); }
 
+	inline reverse_iterator rend() { return reverse_iterator(begin()); }
+
+	inline const_reverse_iterator rend() const { return reverse_iterator(cbegin()); }
+
 	inline const_reverse_iterator crend() const { return reverse_iterator(cbegin()); }
 
+	//CAPACITY
 
-	//Modifiers
+	inline bool empty() const { return size_ == 0; }
 
-	void push_back(const value_type& val) {
-		if (array_end_ == array_range_end_) {
+	inline size_type size() const { return size_; }
+
+	inline size_type max_size() const { return size_type(-1); }
+
+	void reserve(size_type n)
+	{
+		if (n > capacity_){ increase_array(n); }
+	}
+
+	inline size_type capacity() const { return capacity_; }
+
+	void shrink_to_fit() { increase_array(size_); }
+
+	//MODIFIERS
+
+	// clear 1
+
+	void clear()
+	{
+		destroy_elements(array_, size_);
+		size_ = 0;
+		rearrange_pointers();
+	}
+
+	// insert 5
+
+	// emplace
+
+	template <class... Args>
+	iterator emplace(const_iterator position, Args&&... args)
+	{
+		difference_type distance = position - cbegin();
+		if (array_end_ == array_range_end_)
+		{
+			increase_array(std::max(1, static_cast<int>(capacity_ * 2)));
+		}
+		construct_elements(begin() + distance, end(), array_start_ + distance + 1);
+		allocator_.construct(array_start_ + distance, std::forward<Args>(args)...);
+		size_++;
+		rearrange_pointers();
+		return begin() + distance;
+	}
+
+	// erase 2
+
+	iterator erase(const_iterator position)
+	{
+		const difference_type distance = position - cbegin();
+		iterator it = begin() + distance;
+		construct_elements(it + 1, end(), array_start_ + distance);
+		if (size_ != 0){ size_--; }
+		return it;
+
+	}
+
+	iterator erase(const_iterator first, const_iterator last)
+	{
+		const difference_type distance = first - cbegin();
+		const difference_type distance_first_last = last - cbegin();
+		iterator it_first = begin() + distance;
+		iterator it_last = begin() + distance_first_last;
+		construct_elements(it_last, end(), array_start_ + distance);
+		size_ -= last - first;
+		return it_first;
+
+	}
+
+	// push_back 2
+
+	void push_back(const value_type& val)
+	{
+		if (array_end_ == array_range_end_)
+		{
 			increase_array(std::max(1, static_cast<int>(capacity_ * 2)));
 		}
 		allocator_.construct(array_end_, val);
@@ -215,8 +379,10 @@ public:
 		rearrange_pointers();
 	}
 
-	void push_back(value_type&& val) {
-		if (array_end_ == array_range_end_) {
+	void push_back(value_type&& val)
+	{
+		if (array_end_ == array_range_end_)
+		{
 			increase_array(std::max(1, static_cast<int>(capacity_ * 2)));
 		}
 		allocator_.construct(array_end_, val);
@@ -224,14 +390,32 @@ public:
 		rearrange_pointers();
 	}
 
+	// emplace_back 1
 
+	template <class... Args>
+	void emplace_back(Args&&... args)
+	{
+		if (array_end_ == array_range_end_)
+		{
+			increase_array(std::max(1, static_cast<int>(capacity_ * 2)));
+		}
+		allocator_.construct(array_end_, std::forward<Args>(args)...);
+		size_++;
+		rearrange_pointers();
+	}
 
+	// pop_back 1
 
-	void pop_back() {
+	void pop_back()
+	{
 		allocator_.destroy(array_end_);
 		size_--;
 		rearrange_pointers();
 	}
+
+	// resize
+
+	// swap
 
 	private:
 		allocator_type allocator_;
@@ -258,11 +442,10 @@ public:
 			capacity_ = new_size;
 			rearrange_pointers();
 		}
-
-		void construct_elements(pointer begin, pointer end, pointer destination) {
+		void construct_elements(const_iterator begin, const_iterator end, const_iterator destination) {
 			// std::cout << "constructor 1" << std::endl;
 			const difference_type distance = end - begin;
-			for (unsigned int i = 0; i < distance; ++i) {
+			for (difference_type i = 0; i < distance; ++i) {
 				allocator_.construct(destination + i, *(begin));
 				begin++;
 			}
