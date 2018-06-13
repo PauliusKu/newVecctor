@@ -4,15 +4,15 @@
 #include <initializer_list>
 #include <algorithm>
 #include <iterator>
-//#include <exception>
-//#include <memory>
-//#include <cstddef>
-//#include <utility>
+#include <exception>
+#include <memory>
+#include <cstddef>
+#include <utility>
 
 template<
 	class T,
 	class Alloc = std::allocator<T>
-> class vector {
+> class newvector {
 public:
 
 	typedef T 																value_type;//+
@@ -21,124 +21,161 @@ public:
 	typedef std::ptrdiff_t 													difference_type; //+
 	typedef value_type& 													reference; //+
 	typedef const value_type& 												const_reference; //+
-	typedef typename std::allocator_traits<Alloc>::pointer 					pointer; //+
-	typedef typename std::allocator_traits<Alloc>::const_pointer 			const_pointer; //+
+	typedef typename std::allocator_traits<allocator_type>::pointer 		pointer;
+	typedef typename std::allocator_traits<allocator_type>::const_pointer 	const_pointer;
 	typedef T*																iterator; //+
 	typedef const T*														const_iterator; //+
 	typedef std::reverse_iterator<iterator> 								reverse_iterator;//+
 	typedef std::reverse_iterator<const_iterator> 							const_reverse_iterator;//+
 
-private:
-	//alloctors and stuff
-	/**
-	* Allocator associated to the vector.
-	*/
-	allocator_type allocator_;
-
-	/**
-	* Capacity of the vector.
-	*/
-	size_type capacity_;
-	/**
-	* Size of the vector.
-	*/
-	size_type size_;
-	/**
-	* Pointer to the array.
-	*/
-	pointer array_;
-
-	/**
-	* Range pointer to the start of the array.
-	*/
-	pointer array_start_;
-	/**
-	* Range pointer to the end of size of the array.
-	*/
-	pointer array_end_;
-	/**
-	* Range pointer to the end of capacity of the array.
-	*/
-	pointer array_range_end_;
-
-	/**
-	* @brief      Reassigns range pointers to their correct values.
-	*/
-
-	void rearrange_pointers() {
-		array_start_ = array_;
-		array_end_ = array_ + size_;
-		array_range_end_ = array_ + capacity_;
-	}
-
-	/**
-	* @brief      Creates a pointer to a new array. Allocates new_size worth of memory and constructs the elements from the old array.
-	* The old array elements are destroyed and deallocated.
-	*
-	* @param[in]  new_size  new array size
-	*/
-	void increase_array(size_type new_size) {
-		pointer new_array = allocator_.allocate(new_size);
-		construct_elements(begin(), std::min(end(), begin() + new_size), new_array);
-
-		destroy_elements(array_, size_);
-		allocator_.deallocate(array_, capacity_);
-		array_ = new_array;
-		capacity_ = new_size;
-		rearrange_pointers();
-	}
-
-	/**
-	* @brief      Constructs elements from range [begin, end) to a pointer.
-	*
-	* @param[in]  begin          Iterator to begin of range
-	* @param[in]  end            Iterator to end of range
-	* @param[in]  destination    Pointer to destination
-	*
-	* @tparam     InputIterator  Class template type for iterator
-	* @tparam     <unnamed>      { description }
-	*/
-	template <class InputIterator, typename = std::_RequireInputIter<InputIterator>>
-	void construct_elements(InputIterator begin, InputIterator end, pointer destination) {
-		// std::cout << "cons 1" << std::endl;
-		const difference_type distance = end - begin;
-		for (unsigned int i = 0; i < distance; ++i) {
-			allocator_.construct(destination + i, *(begin));
-			begin++;
-		}
-	}
-
-	/**
-	* @brief      Constructs count number of elements with value_type value to a pointer.
-	*
-	* @param[in]  destination  Pointer to destination
-	* @param[in]  count        Number of elements
-	* @param[in]  value        Value
-	*/
-	void construct_elements(pointer destination, size_type count, value_type value) {
-		// std::cout << "cons 2" << std::endl;
-		for (size_type i = 0; i < count; ++i)
-			allocator_.construct(destination + i, value);
-	}
-
-	/**
-	* @brief      Destroys the first n elements of array start.
-	*
-	* @param[in]  start  Pointer to the start of range
-	* @param[in]  n      Number of elements
-	*/
-	void destroy_elements(pointer start, size_type n) {
-		for (int i = 0; i < n; ++i) {
-			allocator_.destroy(start + i);
-		}
-	}
-public:
 	//8 constructors
 
+	explicit newvector(const allocator_type& alloc = allocator_type()) :
+		allocator_(alloc),
+		capacity_(0),
+		size_(0),
+		array_(nullptr)
+	{
+		rearrange_pointers();
+		std::cout << "c-tor 1" << std::endl;
+	};
 
+	newvector(size_type n, value_type val, const allocator_type& alloc = allocator_type()) :
+		allocator_(alloc),
+		capacity_(n),
+		size_(n),
+		array_(allocator_.allocate(n))
+	{
+		rearrange_pointers();
+		construct_elements(array_, n, val);
+		std::cout << "c-tor 2" << std::endl;
+	};
 
+	explicit newvector(size_type n) :
+		allocator_(),
+		capacity_(n),
+		size_(n),
+		array_(allocator_.allocate(n))
+	{
+		rearrange_pointers();
+		std::cout << "c-tor 3" << std::endl;
+	};
 
+	newvector(pointer first, pointer last, const allocator_type& alloc = allocator_type()) :
+		allocator_(alloc),
+		capacity_(static_cast<size_type>(last - first)),
+		size_(static_cast<size_type>(last - first)),
+		array_(allocator_.allocate(static_cast<size_type>(last - first)))
+	{
+		rearrange_pointers();
+		construct_elements(first, last, array_start_);
+		std::cout << "c-tor 4" << std::endl;
+	};
 
+	newvector(const newvector& x) :
+		allocator_(),
+		capacity_(x.capacity()),
+		size_(x.size()),
+		array_(allocator_.allocate(x.capacity()))
+	{
+		rearrange_pointers();
+		construct_elements(x.begin(), x.end(), array_start_);
+		std::cout << "c-tor 5.0" << std::endl;
+	};
+
+	newvector(const newvector& x, const allocator_type& alloc) :
+		allocator_(alloc),
+		capacity_(x.capacity()),
+		size_(x.size()),
+		array_(allocator_.allocate(x.capacity()))
+	{
+		rearrange_pointers();
+		construct_elements(x.begin(), x.end(), array_start_);
+		std::cout << "c-tor 5.1" << std::endl;
+	};
+
+	newvector(newvector&& x) :
+		allocator_(),
+		capacity_(x.capacity_),
+		size_(x.size_),
+		array_(x.array_)
+	{
+		rearrange_pointers();
+		x.array_ = nullptr;
+		x.size_ = 0;
+		x.capacity_ = 0;
+		x.rearrange_pointers();
+		std::cout << "c-tor 6" << std::endl;
+	};
+
+	newvector(newvector&& x, const allocator_type& alloc) :
+		allocator_(alloc),
+		capacity_(x.capacity_),
+		size_(x.size_),
+		array_(x.array_)
+	{
+		rearrange_pointers();
+		x.array_ = nullptr;
+		x.size_ = 0;
+		x.capacity_ = 0;
+		x.rearrange_pointers();
+		std::cout << "c-tor 7" << std::endl;
+	};
+
+	newvector(std::initializer_list<value_type> il, const allocator_type& alloc = allocator_type()) :
+		allocator_(alloc),
+		capacity_(il.size()),
+		size_(il.size()),
+		array_(allocator_.allocate(il.size()))
+	{
+		rearrange_pointers();
+		construct_elements(il.begin(), il.end(), array_start_);
+		std::cout << "c-tor 8" << std::endl;
+	};
+
+	~newvector() {
+		destroy_elements(array_, size_);
+		allocator_.deallocate(array_, capacity_);
+		array_start_ = nullptr;
+		array_end_ = nullptr;
+		array_range_end_ = nullptr;
+	}
+
+	// Element access
+
+	reference operator[](size_type n) { return *(array_start_ + n); }
+
+	const_reference operator[](size_type n) const { return *(array_start_ + n); }
+
+	reference at(size_type n) {
+		if (n > 0 && n < capacity_)
+			return *(array_start_ + n);
+		else throw std::out_of_range("out of vector range.");
+	}
+
+	const_reference at(size_type n) const {
+		if (n > 0 && n < capacity_)
+			return *(array_start_ + n);
+		else throw std::out_of_range("out of vector range.");
+	}
+
+	inline reference front() {
+		return *(array_start_);
+	}
+
+	inline const_reference front() const {
+		return *(array_start_);
+	}
+
+	inline reference back() {
+		return *(array_end_);
+	}
+
+	inline const_reference back() const {
+		return *(array_end_);
+	}
+
+	inline pointer data() const { return array_; }
 
 	// Iterators
 
@@ -183,8 +220,8 @@ public:
 			increase_array(std::max(1, static_cast<int>(capacity_ * 2)));
 		}
 		allocator_.construct(array_end_, val);
-		rearrange_pointers();
 		size_++;
+		rearrange_pointers();
 	}
 
 
@@ -196,7 +233,53 @@ public:
 		rearrange_pointers();
 	}
 
+	private:
+		allocator_type allocator_;
+		size_type capacity_;
+		size_type size_;
+		pointer array_;
+		pointer array_start_;
+		pointer array_end_;
+		pointer array_range_end_;
 
+		void rearrange_pointers() {
+			array_start_ = array_;
+			array_end_ = array_ + size_;
+			array_range_end_ = array_ + capacity_;
+		}
+
+		void increase_array(size_type new_size) {
+			pointer new_array = allocator_.allocate(new_size);
+			construct_elements(begin(), std::min(end(), begin() + new_size), new_array);
+
+			destroy_elements(array_, size_);
+			allocator_.deallocate(array_, capacity_);
+			array_ = new_array;
+			capacity_ = new_size;
+			rearrange_pointers();
+		}
+
+		void construct_elements(pointer begin, pointer end, pointer destination) {
+			// std::cout << "constructor 1" << std::endl;
+			const difference_type distance = end - begin;
+			for (unsigned int i = 0; i < distance; ++i) {
+				allocator_.construct(destination + i, *(begin));
+				begin++;
+			}
+		}
+
+		void construct_elements(pointer destination, size_type count, value_type value) {
+			// std::cout << "constructor 2" << std::endl;
+			for (size_type i = 0; i < count; ++i)
+				allocator_.construct(destination + i, value);
+		}
+
+		void destroy_elements(pointer start, size_type n) {
+			for (size_type i = 0; i < n; ++i) {
+				allocator_.destroy(start + i);
+
+			}
+		}
 };
 
 #endif
