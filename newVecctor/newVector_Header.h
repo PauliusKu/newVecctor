@@ -28,7 +28,7 @@ public:
 	typedef std::reverse_iterator<iterator> 								reverse_iterator;//+
 	typedef std::reverse_iterator<const_iterator> 							const_reverse_iterator;//+
 
-	// 9 constructors
+	// CONSTRUCTORS 9
 
 	explicit newvector(const allocator_type& alloc = allocator_type()) :
 		allocator_(alloc),
@@ -134,6 +134,7 @@ public:
 	};
 
 	//desructor
+
 	~newvector() {
 		destroy_elements(array_, size_);
 		allocator_.deallocate(array_, capacity_);
@@ -200,29 +201,29 @@ public:
 	// assign
 
 	void assign(size_type n, const_reference val) {
-		size_ = n;
 		if (n > capacity_) { increase_array(n); }
 		construct_elements(array_, n, val);
+		size_ = n;
 		rearrange_pointers();
 		std::cout << "assign 1" << std::endl;
 	}
 
 	void assign(pointer first, pointer last) {
-		size_ = last - first;
 		if (last - first > capacity_) { increase_array(last - first); }
 		construct_elements(first, last, array_start_);
+		size_ = last - first;
 		rearrange_pointers();
 		std::cout << "assign 2" << std::endl;
 	}
 
 	void assign(std::initializer_list<value_type> il) {
-		size_ = il.size();
 		if (il.size() <= capacity_) {
 		}
 		else {
 			increase_array(il.size());
 		}
 		construct_elements(il.begin(), il.end(), begin());
+		size_ = il.size();
 		rearrange_pointers();
 		std::cout << "assign 3" << std::endl;
 	}
@@ -325,7 +326,84 @@ public:
 
 	// insert 5
 
-	// emplace
+	iterator insert(const_iterator position, const value_type& val)
+	{
+		const difference_type distance = position - cbegin();
+		if (array_end_ == array_range_end_)
+		{
+			increase_array(std::max(1, static_cast<int>(capacity_ * 2)));
+		}
+		size_++;
+		iterator it = begin() + distance;
+		construct_elements_backward(it, end(), array_start_ + distance + 1);
+		allocator_.construct(array_start_ + distance, val);
+		rearrange_pointers();
+		return it;
+	}
+
+	iterator insert(const_iterator position, value_type&& val)
+	{
+		const difference_type distance = position - cbegin();
+		if (array_end_ == array_range_end_)
+		{
+			increase_array(std::max(1, static_cast<int>(capacity_ * 2)));
+		}
+		size_++;
+		iterator it = begin() + distance;
+		construct_elements_backward(it, end(), array_start_ + distance + 1);
+		allocator_.construct(array_start_ + distance, val);
+		rearrange_pointers();
+		return it;
+	}
+
+	iterator insert(const_iterator position, size_type count, const value_type& val)
+	{
+		const difference_type distance = position - cbegin();
+		if (size_ + count > capacity_)
+		{
+			increase_array(std::max(static_cast<int>(capacity_ * 2), static_cast<int>(size_ + count)));
+		}
+		size_ += count;
+		iterator it = begin() + distance;
+		construct_elements_backward(it, end(), array_start_ + distance + count);
+		construct_elements(it, count, val);
+		rearrange_pointers();
+		return it;
+	}
+
+	iterator insert(const_iterator position, const_iterator first, const_iterator last)
+	{
+		const difference_type distance = position - cbegin();
+		const difference_type count = last - first;
+		if (size_ + count > capacity_)
+		{
+			increase_array(std::max(static_cast<int>(capacity_ * 2), static_cast<int>(size_ + count)));
+		}
+		size_ += count;
+		iterator it = begin() + distance;
+		construct_elements_backward(it, end(), array_start_ + distance + count);
+		construct_elements(first, last, array_start_ + distance);
+		rearrange_pointers();
+		return it;
+	}
+
+	iterator insert(const_iterator position, std::initializer_list<value_type> il)
+	{
+		const difference_type distance = position - cbegin();
+		const difference_type count = il.end() - il.begin();
+		if (size_ + count > capacity_)
+		{
+			increase_array(std::max(static_cast<int>(capacity_ * 2), static_cast<int>(size_ + count)));
+		}
+		size_ += count;
+		iterator it = begin() + distance;
+		construct_elements_backward(it, end(), array_start_ + distance + count);
+		construct_elements(il.begin(), il.end(), array_start_ + distance);
+		rearrange_pointers();
+		return it;
+	}
+
+	// emplace 1
 
 	template <class... Args>
 	iterator emplace(const_iterator position, Args&&... args)
@@ -335,7 +413,7 @@ public:
 		{
 			increase_array(std::max(1, static_cast<int>(capacity_ * 2)));
 		}
-		construct_elements(begin() + distance, end(), array_start_ + distance + 1);
+		construct_elements_backward(begin() + distance, end(), array_start_ + distance + 1);
 		allocator_.construct(array_start_ + distance, std::forward<Args>(args)...);
 		size_++;
 		rearrange_pointers();
@@ -350,6 +428,7 @@ public:
 		iterator it = begin() + distance;
 		construct_elements(it + 1, end(), array_start_ + distance);
 		if (size_ != 0){ size_--; }
+		rearrange_pointers();
 		return it;
 
 	}
@@ -362,6 +441,7 @@ public:
 		iterator it_last = begin() + distance_first_last;
 		construct_elements(it_last, end(), array_start_ + distance);
 		size_ -= last - first;
+		rearrange_pointers();
 		return it_first;
 
 	}
@@ -413,9 +493,43 @@ public:
 		rearrange_pointers();
 	}
 
-	// resize
+	// resize 2
 
-	// swap
+	void resize(size_type n)
+	{
+		if (n <= size_)
+		{
+			destroy_elements(array_start_ + n, size_ - n);
+		}
+		else increase_array(std::max(n, 2 * capacity_));
+		size_ = n;
+	}
+
+	void resize(size_type n, const value_type& val)
+	{
+		if (n <= size_)
+		{
+			destroy_elements(array_start_ + n, size_ - n);
+		}
+		else
+		{
+			increase_array(std::max(n, 2 * capacity_));
+			construct_elements(end(), array_range_end_ - array_end_, val);
+			rearrange_pointers();
+		}
+		size_ = n;
+	}
+
+	// swap 1
+
+	void swap(newvector& x)
+	{
+		std::swap(capacity_, x.capacity_);
+		std::swap(size_, x.size_);
+		std::swap(array_, x.array_);
+		rearrange_pointers();
+		x.rearrange_pointers();
+	}
 
 	private:
 		allocator_type allocator_;
@@ -426,13 +540,15 @@ public:
 		pointer array_end_;
 		pointer array_range_end_;
 
-		void rearrange_pointers() {
+		void rearrange_pointers()
+		{
 			array_start_ = array_;
 			array_end_ = array_ + size_;
 			array_range_end_ = array_ + capacity_;
 		}
 
-		void increase_array(size_type new_size) {
+		void increase_array(size_type new_size)
+		{
 			pointer new_array = allocator_.allocate(new_size);
 			construct_elements(begin(), std::min(end(), begin() + new_size), new_array);
 
@@ -442,25 +558,43 @@ public:
 			capacity_ = new_size;
 			rearrange_pointers();
 		}
-		void construct_elements(const_iterator begin, const_iterator end, const_iterator destination) {
-			// std::cout << "constructor 1" << std::endl;
+		void construct_elements(const_iterator begin, const_iterator end, const_iterator destination)
+		{
 			const difference_type distance = end - begin;
-			for (difference_type i = 0; i < distance; ++i) {
-				allocator_.construct(destination + i, *(begin));
+			std::cout << "c_elem 1 " << std::endl;
+			for (difference_type i = 0; i < distance; ++i)
+			{
+				allocator_.construct(destination +i, *(begin));
 				begin++;
 			}
 		}
 
-		void construct_elements(pointer destination, size_type count, value_type value) {
-			// std::cout << "constructor 2" << std::endl;
-			for (size_type i = 0; i < count; ++i)
-				allocator_.construct(destination + i, value);
+		void construct_elements_backward(const_iterator begin, const_iterator end, const_iterator destination)
+		{
+
+			const difference_type distance = end - begin;
+			std::cout << "c_elem 1 bckw " << std::endl;
+			for (difference_type i = distance - 1; i >= 0; --i)
+			{
+				allocator_.construct(destination + i, *(end - 1));
+				end--;
+			}
 		}
 
-		void destroy_elements(pointer start, size_type n) {
-			for (size_type i = 0; i < n; ++i) {
-				allocator_.destroy(start + i);
+		void construct_elements(pointer destination, size_type count, value_type value)
+		{
+			std::cout << "c_elem 2 " << std::endl;
+			for (size_type i = 0; i < count; ++i)
+			{
+				allocator_.construct(destination + i, value);
+			}
+		}
 
+		void destroy_elements(pointer start, size_type n)
+		{
+			for (size_type i = 0; i < n; ++i)
+			{
+				allocator_.destroy(start + i);
 			}
 		}
 };
