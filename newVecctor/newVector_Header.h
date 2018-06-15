@@ -238,13 +238,13 @@ public:
 
 	reference at(size_type n)
 	{
-		if (n > 0 && n < capacity_){ return *(array_start_ + n); }
+		if (n >= 0 && n < capacity_){ return *(array_start_ + n); }
 		else throw std::out_of_range("out of vector range.");
 	}
 
 	const_reference at(size_type n) const
 	{
-		if (n > 0 && n < capacity_){ return *(array_start_ + n); }
+		if (n >= 0 && n < capacity_){ return *(array_start_ + n); }
 		else throw std::out_of_range("out of vector range.");
 	}
 
