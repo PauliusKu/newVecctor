@@ -1,0 +1,13 @@
+1---------------------------------------------
+std::vector .size: 10       4.923e-06
+newvector   .size: 10       1.641e-06
+   66.6667% performance increase
+std::vector .size: 100      4.0615e-05
+newvector   .size: 100      2.0102e-05
+   50.506% performance increase
+std::vector .size: 1000     0.00182523
+newvector   .size: 1000     0.0018441
+   -1.03395% performance increase
+std::vector .size: 10000    0.207406
+newvector   .size: 10000    0.206347
+   0.510334% performance increase
