@@ -37,7 +37,7 @@ public:
 		array_(nullptr)
 	{
 		rearrange_pointers();
-		std::cout << "c-tor 1" << std::endl;
+		//std::cout << "c-tor 1" << std::endl;
 	};
 
 	newvector(size_type n, value_type val, const allocator_type& alloc = allocator_type()) :
@@ -48,7 +48,7 @@ public:
 	{
 		rearrange_pointers();
 		construct_elements(array_, n, val);
-		std::cout << "c-tor 2" << std::endl;
+		//std::cout << "c-tor 2" << std::endl;
 	};
 
 	explicit newvector(size_type n) :
@@ -58,7 +58,7 @@ public:
 		array_(allocator_.allocate(n))
 	{
 		rearrange_pointers();
-		std::cout << "c-tor 3" << std::endl;
+		//std::cout << "c-tor 3" << std::endl;
 	};
 
 	newvector(pointer first, pointer last, const allocator_type& alloc = allocator_type()) :
@@ -69,7 +69,7 @@ public:
 	{
 		rearrange_pointers();
 		construct_elements(first, last, array_start_);
-		std::cout << "c-tor 4" << std::endl;
+		//std::cout << "c-tor 4" << std::endl;
 	};
 
 	newvector(const newvector& x) :
@@ -80,7 +80,7 @@ public:
 	{
 		rearrange_pointers();
 		construct_elements(x.begin(), x.end(), array_start_);
-		std::cout << "c-tor 5.0" << std::endl;
+		//std::cout << "c-tor 5.0" << std::endl;
 	};
 
 	newvector(const newvector& x, const allocator_type& alloc) :
@@ -91,7 +91,7 @@ public:
 	{
 		rearrange_pointers();
 		construct_elements(x.begin(), x.end(), array_start_);
-		std::cout << "c-tor 5.1" << std::endl;
+		//std::cout << "c-tor 5.1" << std::endl;
 	};
 
 	newvector(newvector&& x) :
@@ -105,7 +105,7 @@ public:
 		x.size_ = 0;
 		x.capacity_ = 0;
 		x.rearrange_pointers();
-		std::cout << "c-tor 6" << std::endl;
+		//std::cout << "c-tor 6" << std::endl;
 	};
 
 	newvector(newvector&& x, const allocator_type& alloc) :
@@ -119,7 +119,7 @@ public:
 		x.size_ = 0;
 		x.capacity_ = 0;
 		x.rearrange_pointers();
-		std::cout << "c-tor 7" << std::endl;
+		//std::cout << "c-tor 7" << std::endl;
 	};
 
 	newvector(std::initializer_list<value_type> il, const allocator_type& alloc = allocator_type()) :
@@ -130,7 +130,7 @@ public:
 	{
 		rearrange_pointers();
 		construct_elements(il.begin(), il.end(), array_start_);
-		std::cout << "c-tor 8" << std::endl;
+		//std::cout << "c-tor 8" << std::endl;
 	};
 
 	//desructor
@@ -141,7 +141,7 @@ public:
 		array_start_ = nullptr;
 		array_end_ = nullptr;
 		array_range_end_ = nullptr;
-		std::cout << "d - tor" << std::endl;
+		//std::cout << "d - tor" << std::endl;
 	}
 
 	// operator =
@@ -160,7 +160,7 @@ public:
 		}
 		rearrange_pointers();
 		construct_elements(x.begin(), x.end(), array_start_);
-		std::cout << "operator= 1" << std::endl;
+		//std::cout << "operator= 1" << std::endl;
 		return *this;
 	}
 
@@ -176,7 +176,7 @@ public:
 		x.capacity_ = 0;
 		x.array_ = nullptr;
 		x.rearrange_pointers();
-		std::cout << "operator= 2" << std::endl;
+		//std::cout << "operator= 2" << std::endl;
 		return *this;
 	}
 
@@ -194,7 +194,7 @@ public:
 		}
 		rearrange_pointers();
 		construct_elements(il.begin(), il.end(), array_start_);
-		std::cout << "operator= 3" << std::endl;
+		//std::cout << "operator= 3" << std::endl;
 		return *this;
 	}
 
@@ -205,7 +205,7 @@ public:
 		construct_elements(array_, n, val);
 		size_ = n;
 		rearrange_pointers();
-		std::cout << "assign 1" << std::endl;
+		//std::cout << "assign 1" << std::endl;
 	}
 
 	void assign(pointer first, pointer last) {
@@ -213,7 +213,7 @@ public:
 		construct_elements(first, last, array_start_);
 		size_ = last - first;
 		rearrange_pointers();
-		std::cout << "assign 2" << std::endl;
+		//std::cout << "assign 2" << std::endl;
 	}
 
 	void assign(std::initializer_list<value_type> il) {
@@ -225,7 +225,7 @@ public:
 		construct_elements(il.begin(), il.end(), begin());
 		size_ = il.size();
 		rearrange_pointers();
-		std::cout << "assign 3" << std::endl;
+		//std::cout << "assign 3" << std::endl;
 	}
 
 	// get_allocator
@@ -561,7 +561,7 @@ public:
 		void construct_elements(const_iterator begin, const_iterator end, const_iterator destination)
 		{
 			const difference_type distance = end - begin;
-			std::cout << "c_elem 1 " << std::endl;
+			//std::cout << "c_elem 1 " << std::endl;
 			for (difference_type i = 0; i < distance; ++i)
 			{
 				allocator_.construct(destination +i, *(begin));
@@ -573,7 +573,7 @@ public:
 		{
 
 			const difference_type distance = end - begin;
-			std::cout << "c_elem 1 bckw " << std::endl;
+			//std::cout << "c_elem 1 bckw " << std::endl;
 			for (difference_type i = distance - 1; i >= 0; --i)
 			{
 				allocator_.construct(destination + i, *(end - 1));
@@ -583,7 +583,7 @@ public:
 
 		void construct_elements(pointer destination, size_type count, value_type value)
 		{
-			std::cout << "c_elem 2 " << std::endl;
+			//std::cout << "c_elem 2 " << std::endl;
 			for (size_type i = 0; i < count; ++i)
 			{
 				allocator_.construct(destination + i, value);
