@@ -1,5 +1,5 @@
 # newVector(4-oji užduotis)
-
+ ![alt text](https://github.com/PauliusKu/newVector/blob/developer/WordItOut-word-cloud-3145844.png)
 
 ## Programos pagrindinės funkcijos:
  - visos pagrindinės funkcijos sutampa su std::vector funkcijomis;
