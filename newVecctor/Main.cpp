@@ -97,7 +97,7 @@ double push_back_test(const size_t & size)
 	const std::string s = "adfghdhdh";
 	for (size_t i = 0; i < size; i++)
 	{
-		v.insert(v.begin(), s);
+		v.push_back(s);
 	}
 	return t.elapsed();
 }
@@ -137,7 +137,7 @@ void tester(const unsigned int& limit, const unsigned int& repeat)
 
 int main()
 {
-	tester(4, 100);
+	tester(7, 100);
 	system("pause");
 	return 0;
 }
