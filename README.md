@@ -14,9 +14,9 @@
 | -O1 | 37.7629  |
 | -O2 | 39.9743  |
 
-### std::vector ir new vector palyginimas Studento programoje ():
+### std::vector ir new vector palyginimas Studento programoje (size = 10^6):
 
-| Flag| Container      | time (s) (size = 10^6) | performance increase (%) |
+| Flag| Container      | time (s) | performance increase (%) |
 | ------------| ------------- | ------------- |------------- |
 | -Od | std::vector   | 31.5154  |   |
 | -Od | newvector   | 26.9974   |  14.333   |
